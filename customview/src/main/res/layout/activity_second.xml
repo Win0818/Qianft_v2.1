@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical">
+
+    <com.qianft.m.customview.MyViewGroupA
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content">
+
+        <com.qianft.m.customview.MyViewGroupB
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content">
+
+            <com.qianft.m.customview.MyView
+                android:id="@+id/add_id"
+                android:layout_width="100dp"
+                android:layout_height="100dp"
+                android:onClick="AddItem"
+                android:background="@color/colorAccent"/>
+        </com.qianft.m.customview.MyViewGroupB>
+    </com.qianft.m.customview.MyViewGroupA>
+
+    <com.qianft.m.customview.view.FlexibleListView
+        android:id="@+id/list_view"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:divider="@color/colorPrimary"
+        android:dividerHeight="10dp"
+        android:scrollbars="none">
+
+    </com.qianft.m.customview.view.FlexibleListView>
+</LinearLayout>

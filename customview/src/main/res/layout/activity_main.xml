@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/activity_main"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    tools:context="com.qianft.m.customview.activity.MainActivity">
+
+    <com.qianft.m.customview.TopBar
+        android:id="@+id/topbar"
+        android:layout_width="match_parent"
+        android:layout_height="50dp"
+        app:title="自定义"
+        app:titleSize="20sp"
+        app:titleTextColor="@color/colorAccent">
+
+    </com.qianft.m.customview.TopBar>
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Hello World!" />
+
+    <com.qianft.m.customview.CustomView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:background="@color/colorAccent"/>
+    <com.qianft.m.customview.MyTextView
+        android:layout_width="100dp"
+        android:layout_height="30dp"
+        android:text="android study"
+        />
+
+    <com.qianft.m.customview.ShineTextView
+        android:layout_width="200dp"
+        android:layout_height="50dp"
+        android:text="你好漂亮！"
+        tools:text=""
+        android:gravity="center"/>
+    <com.qianft.m.customview.CircleProgressView
+        android:layout_width="150dp"
+        android:layout_height="200dp" />
+    <Button
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="DragViewTest"
+        android:onClick="DragViewTest"/>
+</LinearLayout>
