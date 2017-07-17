@@ -119,17 +119,18 @@ public class WelcomeActivity extends BaseActivity{
 	@Override
 	protected void onStart() {
 		super.onStart();
-		MySharePreData.GetBooleanData(this, Constant.NAVIGATION_SP_NAME + Global.localVersionName, "is_first");
+		//isFirst = MySharePreData.GetBooleanData(this, Constant.NAVIGATION_SP_NAME + Global.localVersionName, "is_first");
 		new Thread(new Runnable() {
 			@Override
 			public void run() {
-				startActivity(new Intent(WelcomeActivity.this,
+				/*startActivity(new Intent(WelcomeActivity.this,
 						GuideActivity.class));
-				finish();
+				finish();*/
 				//第一次打开app打开引导界面
-				/*if (isFirst) {
+				if (isFirst) {
 					startActivity(new Intent(WelcomeActivity.this, 
 							GuideActivity.class));
+					MySharePreData.SetBooleanData(WelcomeActivity.this, Constant.NAVIGATION_SP_NAME + Global.localVersionName, "is_first", false);
 					finish();
 				} else {
 					try {
@@ -141,7 +142,7 @@ public class WelcomeActivity extends BaseActivity{
 					startActivity(new Intent(WelcomeActivity.this, 
 							MainActivity.class));
 					finish();
-				}*/
+				}
 			}
 		}).start();
 	}

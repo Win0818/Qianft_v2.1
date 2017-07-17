@@ -54,9 +54,11 @@ import com.qianft.m.qian.utils.MySharePreData;
 import com.qianft.m.qian.utils.QrUtil;
 import com.qianft.m.qian.utils.SharePopMenu;
 import com.qianft.m.qian.utils.StorageUtils;
+import com.qianft.m.qian.utils.TokenManagerUtil;
 import com.qianft.m.qian.utils.Util;
 import com.qianft.m.qian.view.GlobalProgressDialog;
 import com.qianft.m.qian.view.MyWebView;
+import com.qianft.m.qian.view.MyWebViewClient;
 import com.qianft.m.qian.view.UpdateDialog;
 import com.qianft.m.qian.zxing.DecodeImage;
 import com.tencent.mm.sdk.constants.ConstantsAPI;
@@ -67,6 +69,7 @@ import com.tencent.mm.sdk.openapi.WXAPIFactory;
 import com.umeng.analytics.MobclickAgent;
 import com.umeng.message.PushAgent;
 import com.umeng.socialize.ShareAction;
+import com.umeng.socialize.ShareContent;
 import com.umeng.socialize.UMShareAPI;
 import com.umeng.socialize.UMShareListener;
 import com.umeng.socialize.bean.SHARE_MEDIA;
@@ -290,19 +293,6 @@ public class MainActivity extends BaseActivity implements OnClickListener {
             String login_url = getIntent().getStringExtra("login_url");
             mWebView.loadUrl(login_url);
         }
-        if(!isActive && BaseApplication.getInstance().getLockPatternUtils().savedPatternExists()){
-            //从后台唤醒
-            isActive = true;
-            //Screen_Off_Flag = true;
-            LogUtil.d(TAG, "onResume:  start UnlockGesturePasswordActivity");
-            if (Long.valueOf(TokenBean.getTokenIstance().getTokenTime()).longValue() > new Date().getTime()) {
-                LogUtil.d(TAG, "onResume:  start UnlockGesturePasswordActivity");
-                Intent intent = new Intent(this, UnlockGesturePasswordActivity.class);
-                startActivity(intent);
-            } else {
-                mWebView.loadUrl(Constant.USER_LOGIN_URL);
-            }
-        }
         //友盟统计
         MobclickAgent.onResume(this);
         LogUtil.d(TAG, "onResume:  is executed");
@@ -328,7 +318,6 @@ public class MainActivity extends BaseActivity implements OnClickListener {
      * return
      */
     private void create2DCoder(final String sUrl){
-        //Bitmap bitmap = getBitmap(sUrl);
         final Bitmap bitmap = null;
         LogUtil.d("Wing", "QR sUrl: " + sUrl);
         new Thread(new Runnable() {
@@ -375,7 +364,7 @@ public class MainActivity extends BaseActivity implements OnClickListener {
         if ((event.getAction() == KeyEvent.ACTION_DOWN) && (keyCode == KeyEvent.KEYCODE_BACK)) {
             if (mWebView != null) {
                 LogUtil.d(TAG, "mWebView.getUrl();  "  + mWebView.getUrl());
-                if (keyCode == KeyEvent.KEYCODE_BACK && mWebView.getUrl().equals("http://m.qianft.com/")) {
+                if (keyCode == KeyEvent.KEYCODE_BACK && (mWebView.getUrl().equals(Constant.ADDRESS) || mWebView.getUrl().equals(Constant.HOME_ADDRESS))) {
                     exitApp();
                     return true;
                 } else {
@@ -477,18 +466,17 @@ public class MainActivity extends BaseActivity implements OnClickListener {
                 case "clearToken_android":
                     clearToken(json);
                     break;
+                case "setGestrueLock_android":   //设置保存手势解锁
+                    setGestrueLock(json);
+                    break;
+                case "removeGestrueLock_android"://删除保存手势解锁
+                    removeGestrueLock(json);
+                    break;
+                case "share_share_group_android"://通过传参分享特定目标
+                    shareGroup(json);
+                    break;
                 default:
-                    try {
-                        returnJson.put("errorCode", "0002");
-                        returnJson.put("errorMsg", "This version nonsupport function");
-                    } catch (JSONException e) {
-                        e.printStackTrace();
-                    }finally {
-                        if (!TextUtils.isEmpty(mCallback) && returnJson != null) {
-                            String result = returnJson.toString();
-                            mWebView.loadUrl("javascript:" + mCallback + "(" + result +")" );
-                        }
-                    }
+                    mWebView.loadUrl("javascript:" + mCallback + "(" + ERROR_CODE.X0002 +")" );
                     break;
             }
         }
@@ -1086,21 +1074,6 @@ public class MainActivity extends BaseActivity implements OnClickListener {
                 }
             });
         }
-
-        private Map<String,String> valueMap = new HashMap<String, String>();
-
-        @JavascriptInterface
-        public String set(String key, String value) {
-            valueMap.put(key, value);
-            return "";
-        }
-
-        @JavascriptInterface
-        public String get(String key){
-            return valueMap.get(key);
-        }
-
-
         //登录时设置token
         public void setToken(final String para) {
             runOnUiThread(new Runnable() {
@@ -1112,12 +1085,11 @@ public class MainActivity extends BaseActivity implements OnClickListener {
                     String mCallback = null;
                     try {
                         jsonObject = new JSONObject(para);
-                        tokenBean.setToken(jsonObject.getString("token"));
-                        tokenBean.setTokenTime(jsonObject.getString("expireTime"));
+                        TokenManagerUtil.setToken(MainActivity.this, jsonObject.getString("token"), jsonObject.getString("expireTime"));
                         if (jsonObject.has("callback")) {
                             mCallback = jsonObject.getString("callback");
+                            mWebView.loadUrl("javascript:" + mCallback + "(" + JsonUtils.buildJsonStr(ERROR_CODE.X0000) +")" );
                         }
-                        mWebView.loadUrl("javascript:" + mCallback + "(" + JsonUtils.buildJsonStr(ERROR_CODE.X0000) +")" );
                     }catch (Exception e) {
                         e.printStackTrace();
                     }
@@ -1130,17 +1102,16 @@ public class MainActivity extends BaseActivity implements OnClickListener {
             runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
-                    TokenBean tokenBean = TokenBean.getTokenIstance();
-                    tokenBean.clearToken();
+                    LogUtil.d("Wing", "clearToken ");
+                    TokenManagerUtil.setToken(MainActivity.this, "", "");
                     JSONObject jsonPara;
                     String mCallback = null;
                     try {
                         jsonPara = new JSONObject(para);
                         if (jsonPara.has("callback")) {
                             mCallback = jsonPara.getString("callback");
+                            mWebView.loadUrl("javascript:" + mCallback + "(" + JsonUtils.buildJsonStr(ERROR_CODE.X0000) +")" );
                         }
-                        LogUtil.d("wing", "clearToken: " + JsonUtils.buildJsonStr(ERROR_CODE.X0000));
-                        mWebView.loadUrl("javascript:" + mCallback + "(" + JsonUtils.buildJsonStr(ERROR_CODE.X0000) +")" );
                     } catch (Exception e) {
                         e.printStackTrace();
                     }
@@ -1152,7 +1123,20 @@ public class MainActivity extends BaseActivity implements OnClickListener {
             runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
+                    LogUtil.d("Wing", "gesture para: " + para);
+                    JSONObject jsonPara;
+                    String mCallback = null;
+                    try {
+                        jsonPara = new JSONObject(para);
+                        BaseApplication.getInstance().getLockPatternUtils().saveLockPatternV2(jsonPara.getString("gestrueLock"));
+                        if (jsonPara.has("callback")) {
+                            mCallback = jsonPara.getString("callback");
+                            mWebView.loadUrl("javascript:" + mCallback + "(" + JsonUtils.buildJsonStr(ERROR_CODE.X0000) +")" );
+                        }
 
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
                 }
             });
         }
@@ -1161,11 +1145,114 @@ public class MainActivity extends BaseActivity implements OnClickListener {
             runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
+                    JSONObject jsonPara;
+                    String mCallback = null;
+                    try {
+                        jsonPara = new JSONObject(para);
+                        BaseApplication.getInstance().getLockPatternUtils().clearLockV2();
+                        if (jsonPara.has("callback")) {
+                            mCallback = jsonPara.getString("callback");
+                            mWebView.loadUrl("javascript:" + mCallback + "(" + JsonUtils.buildJsonStr(ERROR_CODE.X0000) +")" );
+                        }
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+
+                }
+            });
+        }
+        //特定目标分享
+        public void shareGroup(final String para) {
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    JSONObject paraJson;
+                    String mCallback = null;
+                    try {
+                        paraJson = new JSONObject(para);
+                        String shareType = paraJson.getString("type");
+                        String mShareUrl = paraJson.getString("link");
+                        String mTitle = paraJson.getString("title");
+                        String mDescription = paraJson.getString("desc");
+                        String mImageUrl = paraJson.getString("imgUrl");
+                        Bitmap thumb = BitmapFactory.decodeResource(getResources(),
+                                R.drawable.app_icon);
+                        LogUtil.d("wing", "mImageUrl" + mImageUrl);
+                        if (paraJson.has("callback")) {
+                            mCallback = paraJson.getString("callback");
+                        }
+                        switch (shareType) {
+                            case "friends":
+                                new ShareAction(MainActivity.this)
+                                        .setPlatform(SHARE_MEDIA.WEIXIN)//传入平台
+                                        .withText(mDescription)
+                                        .withTitle(mTitle)
+                                        .withTargetUrl(mShareUrl)
+                                        .withMedia(new UMImage(MainActivity.this, thumb))
+                                        .setCallback(umShareListener)//回调监听器
+                                        .share();
+                                break;
+                            case "circle":
+                                new ShareAction(MainActivity.this)
+                                        .setPlatform(SHARE_MEDIA.WEIXIN_CIRCLE)//传入平台
+                                        .withText(mDescription)
+                                        .withTitle(mTitle)
+                                        .withTargetUrl(mShareUrl)
+                                        .withMedia(new UMImage(MainActivity.this, thumb))
+                                        .setCallback(umShareListener)//回调监听器
+                                        .share();
+                                break;
+                            case "space":
+                                new ShareAction(MainActivity.this)
+                                        .setPlatform(SHARE_MEDIA.QZONE)//传入平台
+                                        .withText(mDescription)
+                                        .withTitle(mTitle)
+                                        .withTargetUrl(mShareUrl)
+                                        .withMedia(new UMImage(MainActivity.this, thumb))
+                                        .setCallback(umShareListener)//回调监听器
+                                        .share();
+                                break;
+                            case "qq":
+                                new ShareAction(MainActivity.this)
+                                        .setPlatform(SHARE_MEDIA.QQ)//传入平台
+                                        .withText(mDescription)
+                                        .withTitle(mTitle)
+                                        .withTargetUrl(mShareUrl)
+                                        .withMedia(new UMImage(MainActivity.this, thumb))
+                                        .setCallback(umShareListener)//回调监听器
+                                        .share();
+                                break;
+                            case "sms":
+                                sendSMS(mDescription, mShareUrl );
+                                break;
+                            default:
+                                break;
+                        }
+                        if (paraJson.has("callback")) {
+                            mCallback = paraJson.getString("callback");
+                            mWebView.loadUrl("javascript:" + mCallback + "(" + JsonUtils.buildJsonStr(ERROR_CODE.X0000) +")" );
+                        }
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
 
                 }
             });
         }
         //return insertObj;
+    }
+
+    /**
+     * 发短信
+     */
+    private   void  sendSMS(String description, String webUrl){
+        String smsBody = description + webUrl;
+        Uri smsToUri = Uri.parse( "smsto:" );
+        Intent sendIntent =  new  Intent(Intent.ACTION_VIEW, smsToUri);
+        //短信内容
+        sendIntent.putExtra( "sms_body", smsBody);
+        sendIntent.setType( "vnd.android-dir/mms-sms" );
+        startActivity(sendIntent);
     }
 
     /**
@@ -1261,11 +1348,26 @@ public class MainActivity extends BaseActivity implements OnClickListener {
     @Override
     protected void onStop() {
         super.onStop();
-        Log.d("wing", "onStop execute!");
+        Log.d("wing", "onStop execute!0000000");
 
+        //只执行一次
         if(!isAppOnForeground()){
             Log.d("wing", "onStop back");
             isActive = false;
+            String tokenExpirn = MySharePreData.GetData(MainActivity.this, Constant.TOKEN_SP_NAME, Constant.EXPIRE_TIME_SP_KEY);
+            if(BaseApplication.getInstance().getLockPatternUtils().savedPatternExists() && !TextUtils.isEmpty(tokenExpirn)){
+                //从后台唤醒
+                isActive = true;
+                //Screen_Off_Flag = true;
+                LogUtil.d(TAG, "onResume:  start UnlockGesturePasswordActivity");
+                if (Long.valueOf(tokenExpirn).longValue() > new Date().getTime()) {
+                    LogUtil.d(TAG, "onResume:  start UnlockGesturePasswordActivity");
+                    Intent intent = new Intent(this, UnlockGesturePasswordActivity.class);
+                    startActivity(intent);
+                } else {
+                    mWebView.loadUrl(Constant.USER_LOGIN_URL);
+                }
+            }
         }
     }
     /**
@@ -1273,6 +1375,7 @@ public class MainActivity extends BaseActivity implements OnClickListener {
      * @return
      */
     public boolean isAppOnForeground(){
+        LogUtil.d("Wing", "onStop execute! isAppOnForeground111111");
         ActivityManager am = (ActivityManager) this.getSystemService(Context.ACTIVITY_SERVICE);
         String curPackageName = getApplicationContext().getPackageName();
         List<RunningAppProcessInfo> app = am.getRunningAppProcesses();
@@ -1316,6 +1419,9 @@ public class MainActivity extends BaseActivity implements OnClickListener {
         switch (message) {
             case "refresh_url":
                 mWebView.loadUrl(Constant.ADDRESS);
+                break;
+            case "refresh_login":
+                mWebView.loadUrl(Constant.USER_LOGIN_URL);
                 break;
             case "auth_cancel":
                 JSONObject returnCancelJson = new JSONObject();

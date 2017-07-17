@@ -6,6 +6,11 @@ public class Constant {
 	 */
 	public static final String NAVIGATION_SP_NAME = "qianft_sp";
 	public static final String WECHAT_LOGIN_SP_NAME = "wechat_login_sp";
+
+	public static final String  TOKEN_SP_NAME = "token_sp";
+	public static final String  TOKEN_SP_KEY = "token";
+	public static final String  EXPIRE_TIME_SP_KEY = "expire_time";
+
 	
 	public static final String UPDATE_DIALOG = "update_dialog";
 	
@@ -56,15 +61,20 @@ public class Constant {
 	/**
 	 * 
 	 */
-	public static final String SERVER1 = "http://192.168.0.70:8088/";// 本地服务器
-	public static final String SERVER = "http://m.qianft.com/";     //线上服务器
-	public static final String URL_IMAGE = SERVER + "App/GetAppImg/0";  //"Assets/Imgs/Home/Welcome.png"; 
+	//public static final String ADDRESS = "http://192.168.2.14:8033/";
+	public static final String ADDRESS = "http://app.qianft.com/";
+	//public static final String ADDRESS = "file:///android_asset/html/index.html";
+	//public static final String SERVER = "http://m.qianft.com/";     //线上服务器
+	public static final String SERVER = ADDRESS;
+	public static final String URL_IMAGE = SERVER + "App/GetAppImg/0";  //"Assets/Imgs/Home/Welcome.png";
+	public static final String HOME_ADDRESS = SERVER + "Home/Index";  //首页地址
 	/**
 	 * 主地址
 	 */
 	//public static final String ADDRESS = "http://m.qianft.com/";
 	//public static final String ADDRESS = "http://app.qianft.com/";
-	public static final String ADDRESS = "http://192.168.2.14:8033/";
+	//public static final String ADDRESS = "http://192.168.2.14:8033/";
+	//public static final String ADDRESS = "http://192.168.2.100:8081/weixi_rcyh/";
 	//public static final String ADDRESS = "file:///android_asset/html/index.html";
 
 	public static final String DOWNLOAD_NEW_APK = SERVER + "app/GetAppVersion/0";  //app版本信息

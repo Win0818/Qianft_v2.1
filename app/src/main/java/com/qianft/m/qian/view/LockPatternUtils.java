@@ -15,6 +15,8 @@ import android.content.Context;
 import android.os.FileObserver;
 import android.util.Log;
 
+import com.qianft.m.qian.utils.LogUtil;
+
 /**
  * 手势解锁
  *@author Wuyong
@@ -32,12 +34,12 @@ public class LockPatternUtils {
 	 * The maximum number of incorrect attempts before the user is prevented
 	 * from trying again for {@link #FAILED_ATTEMPT_TIMEOUT_MS}.
 	 */
-	public static final int FAILED_ATTEMPTS_BEFORE_TIMEOUT = 5;
+	public static final int FAILED_ATTEMPTS_BEFORE_TIMEOUT = 3;
 	/**
 	 * The minimum number of dots the user must include in a wrong pattern
 	 * attempt for it to be counted against the counts that affect
 	 * {@link #FAILED_ATTEMPTS_BEFORE_TIMEOUT} and
-	 * {@link #FAILED_ATTEMPTS_BEFORE_RESET}
+	 * FAILED_ATTEMPTS_BEFORE_RESET
 	 */
 	public static final int MIN_PATTERN_REGISTER_FAIL = MIN_LOCK_PATTERN_SIZE;
 	/**
@@ -94,6 +96,9 @@ public class LockPatternUtils {
 	public void clearLock() {
 		saveLockPattern(null);
 	}
+	public void clearLockV2() {
+		saveLockPatternV2(null);
+	}
 
 	/**
 	 * Deserialize a pattern. 解密,用于保存状态
@@ -134,12 +139,26 @@ public class LockPatternUtils {
 		return new String(res);
 	}
 
+	public static String patternToStringV2(List<LockPatternView.Cell> pattern) {
+		if (pattern == null) {
+			return "";
+		}
+		final int patternSize = pattern.size();
+
+		byte[] res = new byte[patternSize];
+		StringBuilder sb = new StringBuilder();
+		for (int i = 0; i < patternSize; i++) {
+			LockPatternView.Cell cell = pattern.get(i);
+			sb.append(cell.getRow() * 3 + cell.getColumn() + 1);
+		}
+		return sb.toString();
+	}
+
 	/**
 	 * Save a lock pattern.
 	 * 
 	 * @param pattern
 	 *            The new pattern to save.
-	 * @param isFallback
 	 *            Specifies if this is a fallback to biometric weak
 	 */
 	public void saveLockPattern(List<LockPatternView.Cell> pattern) {
@@ -154,6 +173,30 @@ public class LockPatternUtils {
 				raf.setLength(0);
 			} else {
 				raf.write(hash, 0, hash.length);
+			}
+			raf.close();
+		} catch (FileNotFoundException fnfe) {
+			// Cant do much, unless we want to fail over to using the settings
+			// provider
+			Log.e(TAG, "Unable to save lock pattern to " + sLockPatternFilename);
+		} catch (IOException ioe) {
+			// Cant do much
+			Log.e(TAG, "Unable to save lock pattern to " + sLockPatternFilename);
+		}
+	}
+
+	public void saveLockPatternV2(String patternMD5) {
+		try {
+			// Write the hash to file
+			RandomAccessFile raf = new RandomAccessFile(sLockPatternFilename,
+					"rwd");
+			// Truncate the file if pattern is null, to clear the lock
+			if (patternMD5 == null) {
+				raf.setLength(0);
+			} else {
+				//raf.write(patternMD5.getBytes(), 0, patternMD5.length());
+				//raf.writeChars(patternMD5);
+				raf.writeUTF(patternMD5);
 			}
 			raf.close();
 		} catch (FileNotFoundException fnfe) {
@@ -195,6 +238,8 @@ public class LockPatternUtils {
 		}
 	}
 
+
+
 	/**
 	 * Check to see if a pattern matches the saved pattern. If no pattern
 	 * exists, always returns true.
@@ -221,6 +266,34 @@ public class LockPatternUtils {
 			return true;
 		} catch (IOException ioe) {
 			return true;
+		}
+	}
+
+	public boolean checkPatternV2(String pattterMD5) {
+		try {
+			// Read all the bytes from the file
+			RandomAccessFile raf = new RandomAccessFile(sLockPatternFilename,
+					"r");
+			/*final byte[] stored = new byte[(int) raf.length()];
+			StringBuilder sb = new StringBuilder();
+			LogUtil.d("Wing", "stores: " + new String(stored).toString() + "------" + pattterMD5);
+			int got = raf.read(stored, 0, stored.length);*/
+			/*for (int i = 0; i < (int)raf.length(); i++) {
+				sb.append(raf.readChar()) ;
+			}*/
+			String patternStr = raf.readUTF();
+			LogUtil.d("Wing","patternStr: " + patternStr);
+			raf.close();
+			/*if (got <= 0) {
+				return false;
+			}*/
+			// Compare the hash from the file with the entered pattern's hash
+			//return Arrays.equals(stored, pattterMD5.getBytes());
+			return patternStr.toString().equalsIgnoreCase(pattterMD5);
+		} catch (FileNotFoundException fnfe) {
+			return false;
+		} catch (IOException ioe) {
+			return false;
 		}
 	}
 }

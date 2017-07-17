@@ -29,6 +29,7 @@ import com.qianft.m.qian.common.Constant;
 import com.qianft.m.qian.utils.Installation;
 import com.qianft.m.qian.utils.LogUtil;
 import com.qianft.m.qian.utils.MySharePreData;
+import com.qianft.m.qian.utils.TokenManagerUtil;
 import com.qianft.m.qian.utils.Util;
 
 import java.util.HashMap;
@@ -116,13 +117,8 @@ public class MyWebView extends RelativeLayout{
 
 	//设置URL
 	public void loadUrl(String url) {
-		Map<String, String> headerMap = new HashMap<String, String>();
-		TokenBean tokenBean = TokenBean.getTokenIstance();
-		headerMap.put("token",  tokenBean.getToken());
-		headerMap.put("UDID", Installation.getsInstallationId(BaseApplication.getAppContext()));
-		LogUtil.d("Wing", "aa aaheaderMap= " + headerMap.toString());
+		Map<String, String> headerMap = TokenManagerUtil.getToken(mContext);
 		mWebView.loadUrl(url, headerMap);
-		//mWebView.postUrl();
 	}
 
 	@SuppressLint("JavascriptInterface")
@@ -169,6 +165,7 @@ public class MyWebView extends RelativeLayout{
 		webSettings.setDefaultTextEncodingName("utf-8");
 		//调整到适合Webview大小
 		webSettings.setLoadWithOverviewMode(true);
+		webSettings.setUserAgentString("");
 		// 设置可以访问文件
 		//webSettings.setAllowFileAccess(true);
 		//Sets whether the WebView should enable support for the "viewport" HTML

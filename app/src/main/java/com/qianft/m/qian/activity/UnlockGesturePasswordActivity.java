@@ -9,6 +9,7 @@ import com.qianft.m.qian.R;
 import com.qianft.m.qian.common.Constant;
 import com.qianft.m.qian.common.Global;
 import com.qianft.m.qian.utils.LogUtil;
+import com.qianft.m.qian.utils.MD5Util;
 import com.qianft.m.qian.view.LockPatternUtils;
 import com.qianft.m.qian.view.LockPatternView;
 import com.qianft.m.qian.view.LockPatternView.Cell;
@@ -46,6 +47,7 @@ public class UnlockGesturePasswordActivity extends Activity implements OnClickLi
 	private TextView mHeadTextView;
 	private Animation mShakeAnim;
 	private TextView mForgetPassword;
+	private TextView mChangeAccount;
 	private WebView mWebView;
 	private Toast mToast;
 	private String mAddress = Constant.ADDRESS;
@@ -73,7 +75,9 @@ public class UnlockGesturePasswordActivity extends Activity implements OnClickLi
 		mLockPatternView.setTactileFeedbackEnabled(false);
 		mHeadTextView = (TextView) findViewById(R.id.gesturepwd_unlock_text);
 		mForgetPassword = (TextView) findViewById(R.id.gesturepwd_unlock_forget);
+		mChangeAccount = (TextView) findViewById(R.id.gesturepwd_change_account);
 		mForgetPassword.setOnClickListener(this);
+		mChangeAccount.setOnClickListener(this);
 		mShakeAnim = AnimationUtils.loadAnimation(this, R.anim.shake_x);
 	}
 
@@ -134,9 +138,15 @@ public class UnlockGesturePasswordActivity extends Activity implements OnClickLi
 				 mWebView.loadUrl("javascript:" + "appLoginOut()");
 				 //startActivity(intent);//跳转
 				//退出登录刷新
-				 EventBus.getDefault().post("refresh_url");
-				 BaseApplication.getInstance().getLockPatternUtils().clearLock();
+				 EventBus.getDefault().post("refresh_login");
+				 BaseApplication.getInstance().getLockPatternUtils().clearLockV2();
 				 finish();
+				break;
+			case R.id.gesturepwd_change_account:  //切换用户
+				Intent intentLogin = new Intent(UnlockGesturePasswordActivity.this, MainActivity.class);
+				EventBus.getDefault().post("refresh_login");
+				BaseApplication.getInstance().getLockPatternUtils().clearLockV2();
+				finish();
 				break;
 			default:
 				break;
@@ -156,7 +166,8 @@ public class UnlockGesturePasswordActivity extends Activity implements OnClickLi
 		public void onPatternDetected(List<LockPatternView.Cell> pattern) {
 			if (pattern == null)
 				return;
-			if (BaseApplication.getInstance().getLockPatternUtils().checkPattern(pattern)) {
+			String patterStr = BaseApplication.getInstance().getLockPatternUtils().patternToStringV2(pattern);
+			if (BaseApplication.getInstance().getLockPatternUtils().checkPatternV2(MD5Util.md5LowerCase(patterStr))) {
 				mLockPatternView
 						.setDisplayMode(LockPatternView.DisplayMode.Correct);
 				Intent intent = new Intent(UnlockGesturePasswordActivity.this,
@@ -230,20 +241,6 @@ public class UnlockGesturePasswordActivity extends Activity implements OnClickLi
 		}
 	};
 	
-	/**
-	 * 调用JS函数
-	 * @param webview
-	 */
-	 @SuppressLint("NewApi") 
-	private void testEvaluateJavascript(WebView webview) {
-	    	webview.evaluateJavascript("getSumValue()", new ValueCallback<String>() {
-				@Override
-				public void onReceiveValue(String value) {
-					Log.i(TAG, "onReceiveValue value=   " + value);
-				}
-			});
-	    }
-	 
 	 @Override
 	public boolean onKeyDown(int keyCode, KeyEvent event) {
 		 

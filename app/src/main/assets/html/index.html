@@ -127,7 +127,8 @@
 	//input.addEventListener('change',readFile,false);
 	function startGesturePasswordSetup_js_()  {
 		alert("hello gesture");
-		window.jsObj.startGesturePasswordSetup_android();
+		var json  = "{'callback':'result_s', 'token':'1111111111111111111111', 'expireTime':'result_s'}";
+		window.jsObj.Js_Invoke_Android_Main_Interface("startGesturePasswordSetup_android", json);
 
 	}
 	function isSettingGesturePSW_js() {
@@ -153,7 +154,7 @@
 	function Js_Invoke_Android_Main_Interface(method, json) {
 	    if (!json)
 	      json  = "{'callback':'result_s', 'token':'1111111111111111111111', 'expireTime':'result_s'}";
-	    window.jsObj.Js_Invoke_Android_Main_Interface(method, json);
+	    window.jsObj.Js_Invoke_Android_Main_Interface(method, "");
 	    alert(1);
 	    //add();
 	}

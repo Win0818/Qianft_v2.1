@@ -6,6 +6,7 @@ import java.util.List;
 import com.qianft.m.qian.BaseApplication;
 import com.qianft.m.qian.R;
 import com.qianft.m.qian.utils.LogUtil;
+import com.qianft.m.qian.utils.Util;
 import com.qianft.m.qian.view.LockPatternUtils;
 import com.qianft.m.qian.view.LockPatternView;
 import com.qianft.m.qian.view.LockPatternView.Cell;
@@ -436,6 +437,9 @@ public class CreateGesturePasswordActivity extends BaseActivity implements
 
 	private void saveChosenPatternAndFinish() {
 		BaseApplication.getInstance().getLockPatternUtils().saveLockPattern(mChosenPattern);
+		StringBuilder sb = new StringBuilder();
+		sb.append(BaseApplication.getInstance().getLockPatternUtils().patternToStringV2(mChosenPattern));
+		LogUtil.d("Wing", "Pattern:  " + sb.toString());
 		showToast("密码设置成功");
 		//startActivity(new Intent(this,UnlockGesturePasswordActivity.class));
 		finish();

@@ -26,12 +26,14 @@ import com.qianft.m.qian.utils.Installation;
 import com.qianft.m.qian.utils.LogUtil;
 import com.qianft.m.qian.utils.MySharePreData;
 import com.qianft.m.qian.utils.NoAdTool;
+import com.qianft.m.qian.utils.TokenManagerUtil;
 
 import org.json.JSONObject;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -53,6 +55,7 @@ public class MyWebViewClient extends WebViewClient{
 	private ProgressCallback mProgressCallback;
 	private Context context;
 	private static String homeurl = "http://m.qianft.com/";
+	public static final String TAG = "MyWebViewClient";
 
 	public MyWebViewClient (WebView webView, ProgressCallback progressCallback, Context context) {
 
@@ -64,11 +67,7 @@ public class MyWebViewClient extends WebViewClient{
 	@Override
 	public boolean shouldOverrideUrlLoading(WebView view, String url) {
 		LogUtil.i("Wing", "MyWebViewClient..shouldOverrideUrlLoading..  url=" + url);
-		Map<String, String> headerMap = new HashMap<String, String>();
-		TokenBean tokenBean = TokenBean.getTokenIstance();
-		headerMap.put("token",  tokenBean.getToken());
-		headerMap.put("UDID", Installation.getsInstallationId(BaseApplication.getAppContext()));
-		LogUtil.i("Wing", "headerMap=" + headerMap.toString());
+		Map<String, String> headerMap = TokenManagerUtil.getToken(context);
 		view.loadUrl(url, headerMap);
 		return true;
 	}
@@ -108,11 +107,11 @@ public class MyWebViewClient extends WebViewClient{
 
 /*	public static final MediaType JSON = MediaType.parse("application/json; charset=utf-8");
 	@SuppressLint("NewApi")*/
-	/*@Override
+	@Override
 	public WebResourceResponse shouldInterceptRequest(WebView view, String url) {
 		url = url.toLowerCase();
-		if (!url.contains(homeurl)) {
-			if (!NoAdTool.hasAd(context, url)) {
+		if (!url.contains(Constant.ADDRESS)) {
+			if (NoAdTool.hasAd(context, url)) {
 				return super.shouldInterceptRequest(view, url);
 			} else {
 				return new WebResourceResponse(null, null, null);
@@ -121,7 +120,7 @@ public class MyWebViewClient extends WebViewClient{
 			return super.shouldInterceptRequest(view, url);
 
 		}
-	}*/
+	}
 
 
 		/*JSONObject jsonObject = new JSONObject();
@@ -174,7 +173,7 @@ public class MyWebViewClient extends WebViewClient{
 		}
 	}*/
 
-	@Override
+	/*@Override
 	public void onLoadResource(WebView view, String url) {
 		super.onLoadResource(view, url);
 	}
@@ -205,8 +204,8 @@ public class MyWebViewClient extends WebViewClient{
 			type = MimeTypeMap.getSingleton().getMimeTypeFromExtension(extension);
 		}
 		return type;
-	}
-	@Override
+	}*/
+	/*@Override
 	public WebResourceResponse shouldInterceptRequest(WebView view, String url) {
 
 		//if (request != null && request.getUrl() != null && request.getMethod().equalsIgnoreCase("get")) {
@@ -219,6 +218,7 @@ public class MyWebViewClient extends WebViewClient{
 			}
 		} else {
 			String ajaxUrl  = injectIsParams(url);
+			LogUtil.d("Wing", "ajaxUrl: " + ajaxUrl);
 			return super.shouldInterceptRequest(view, ajaxUrl);
 		}
 	}
@@ -247,18 +247,28 @@ public class MyWebViewClient extends WebViewClient{
 					if (scheme.equalsIgnoreCase("http") || scheme.equalsIgnoreCase("https")) {
                         //String ajaxUrl  = injectIsParams(request.getUrl().toString());
                         URL ajaxUrl  = new URL(injectIsParams(request.getUrl().toString()));
+						//URL ajaxUrl  = new URL(request.getUrl().toString());
                         //return super.shouldInterceptRequest(view, ajaxUrl);
                         HttpURLConnection conn = (HttpURLConnection) ajaxUrl.openConnection();
-						conn.connect();
-						for (Map.Entry<String, String> h : extraHeaders.entrySet()) {
+						LogUtil.d("Wing", "response: header " + request.getRequestHeaders().toString());
+						//conn.getHeaderField();
+                        conn.setRequestMethod("POST");
+						conn.setDoOutput(true);
+						conn.setDoInput(true);
+						//conn.connect();
+						//conn.setRequestMethod("POST");
+						*//*for (Map.Entry<String, String> h : extraHeaders.entrySet()) {
 							conn.addRequestProperty(h.getKey(), h.getValue());
-						}
+						}*//*
 						String contentType = conn.getContentType().split(";")[0];
-						String encoding    = conn.getContentEncoding();
+						String encoding    = conn.getContentType().split(";")[0];
+						LogUtil.d("Wing", "response:  " + contentType + "++++++++++" +  encoding + "+++++++++" + conn.getResponseCode());
                         // URL url = new URL(injectIsParams(request.getUrl().toString()));
                         //URLConnection connection = url.openConnection();
+						LogUtil.d("Wing", "response:  " + conn.getContentType() + "aaaaa" +  conn.getHeaderField("encoding") + "----" + conn.getResponseCode() + "-------inputstream:  " + conn.getInputStream());
                         // return new WebResourceResponse(conn.getContentType(), conn.getHeaderField("encoding"), conn.getInputStream());
-                        return new WebResourceResponse(contentType, encoding, conn.getInputStream());
+                         return new WebResourceResponse(contentType, "UTF-8", conn.getInputStream());
+                       // return new WebResourceResponse(contentType, encoding, conn.getInputStream());
                     }
 				} catch (IOException e) {
 					e.printStackTrace();
@@ -269,8 +279,9 @@ public class MyWebViewClient extends WebViewClient{
 				}
 				//return null;
 			}
-			return null;
-		}
+			 return null;
+		}*/
+
 		/*@Override
 		public WebResourceResponse shouldInterceptRequest(WebView view, String url) {
 			if (!TextUtils.isEmpty(url) && Uri.parse(url).getScheme() != null) {
@@ -290,18 +301,84 @@ public class MyWebViewClient extends WebViewClient{
 			return null;
 		}*/
 
+	@Override
+	public void onFormResubmission(WebView view, Message dontResend, Message resend) {
+		super.onFormResubmission(view, dontResend, resend);
+	}
+
 	public static String injectIsParams(String url) {
 		if (url != null && !url.contains("UDID=") && !url.contains("Token=")) {
 			if (url.contains("?")) {
-				return url + "&UDID=" + Global.installationId + "&Token=" + TokenBean.getTokenIstance().getToken();
+				//return url + "&UDID=" + Global.installationId + "&Token=" + TokenBean.getTokenIstance().getToken();
+				return url + "&UDID=" + Global.installationId + "&Token=" + 111111111;
 			} else {
-				return url + "?UDID=" + Global.installationId + "&Token=" + TokenBean.getTokenIstance().getToken();
+				//return url + "?UDID=" + Global.installationId + "&Token=" + TokenBean.getTokenIstance().getToken();
+				return url + "?UDID=" + Global.installationId + "&Token=" + 111111111;
 			}
 		} else {
 			return url;
 		}
 	}
-	public Map<String, String> getExtraHeaders() {
+
+
+	/*@SuppressLint("NewApi")
+	@Override
+	public WebResourceResponse shouldInterceptRequest(WebView view, final WebResourceRequest request) {
+		if (request != null && request.getUrl() != null) {
+			String scheme = request.getUrl().getScheme().trim();
+			if (scheme.equalsIgnoreCase("http") || scheme.equalsIgnoreCase("https")) {
+				return super.shouldInterceptRequest(view, new WebResourceRequest() {
+					@Override
+					public Uri getUrl() {
+						return Uri.parse(injectIsParams(request.getUrl().toString()));
+					}
+
+					@SuppressLint("NewApi")
+					@Override
+					public boolean isForMainFrame() {
+						return request.isForMainFrame();
+					}
+
+					@Override
+					public boolean isRedirect() {
+						return false;
+					}
+
+					@SuppressLint("NewApi")
+					@Override
+					public boolean hasGesture() {
+						return request.hasGesture();
+					}
+
+					@SuppressLint("NewApi")
+					@Override
+					public String getMethod() {
+						return request.getMethod();
+					}
+
+					@SuppressLint("NewApi")
+					@Override
+					public Map<String, String> getRequestHeaders() {
+						return request.getRequestHeaders();
+					}
+				});
+			}
+		}
+		return super.shouldInterceptRequest(view, request);
+	}
+
+
+	@Override
+	public WebResourceResponse shouldInterceptRequest(WebView view, String url) {
+		if (!TextUtils.isEmpty(url) && Uri.parse(url).getScheme() != null) {
+			String scheme = Uri.parse(url).getScheme().trim();
+			if (scheme.equalsIgnoreCase("http") || scheme.equalsIgnoreCase("https")) {
+				return super.shouldInterceptRequest(view, injectIsParams(url));
+			}
+		}
+		return super.shouldInterceptRequest(view, url);
+	}*/
+	public static Map<String, String> getExtraHeaders() {
 		Map<String, String> map = new HashMap<>();
 		map.put("Token", TokenBean.getTokenIstance().getToken());
 		map.put("UDID", Global.installationId);

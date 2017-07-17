@@ -67,8 +67,8 @@ public class BaseActivity extends Activity{
 	private BroadcastReceiver mScreenBroadcast = new BroadcastReceiver() {
     	public void onReceive(Context context, Intent intent) {
     		 String action = intent.getAction();  
-             if(Intent.ACTION_SCREEN_ON.equals(action)){  
-            	 //Screen_Off_Flag = true;
+             if(Intent.ACTION_SCREEN_ON.equals(action)){
+				// Global.Screen_Off_Flag = true;
 				 LogUtil.d("Wing", "ACTION_SCREEN_ON");
                 // mScreenStateListener.onScreenOn();  
              }else if(Intent.ACTION_SCREEN_OFF.equals(action)){ 
